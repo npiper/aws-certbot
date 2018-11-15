@@ -1,6 +1,16 @@
-# Test of using Let's encrypt
+# AWS + Let's encrypt Docker SSL Certificate Generator
 
 Goal:  Can we launch a version of a webserver of 'neilpiper.me' that uses a Let's encrypt certificate for that domain and is fully automated?
+
+This project creates a docker container meeting the software requirements of the article [Easy, Lets Encrypt certificates on AWS](https://hackernoon.com/easy-lets-encrypt-certificates-on-aws-79387767830bs)
+
+Let’s Encrypt offers a free Certificate Authority service. It will sign SSL/TLS certificates for free.
+
+You can experiment with SSL on AWS without getting those pesky 'Untrusted certificate' warnings on your browser or for your users.
+
+## TO DO
+
+Move the certificate somewhere useful in an automated way.
 
 # Initial approach
 
@@ -8,18 +18,112 @@ Goal:  Can we launch a version of a webserver of 'neilpiper.me' that uses a Let'
  * Install nginx, lets encrypt, AWS cli
  * Env variables for Domain, admin email & any AWS authentication, keys
 
+# Pre-Requisites
+
+ * AWS Account and authorised user at Administrator level
+ * A domain name you own via AWS Route53
+ * Your domain name registered as a hosted zone in Route53 in your AWS account
+
+In my example I have an AWS account, and a domain I own `neilpiper.me` is registered in Route53 and a hosted zone. (This is the only part that I haven't found a way to make free!)
+
+# Docker Build
+
+Build your docker image
+
+```
+```
 
 # Runtime variables
 
+These are the runtime variables of the container you should use so that you generate a certificate in the container.
+
+
+
 ```
-DOMAIN
-DOMAIN_ADMIN_EMAIL
+DOMAIN // Your internet domain e.g. neilpiper.me
+DOMAIN_ADMIN_EMAIL // Your admin email for that domain e.g. webmaster@neilpiper.me
+
+// AWS Credentials
+AWS_ACCESS_KEY_ID your_access_key_id
+AWS_SECRET_ACCESS_KEY your_secret_key
+
+// Optional region - default Ireland
+AWS_DEFAULT_REGION eu-west-1
 ```
 
 Example docker run
+
 ```
-docker run my-awesome-image -e "DOMAIN=mydomain.com" -e "DOMAIN_ADMIN_EMAIL=webmaster@mydomain.com"
+docker run npiper/certbot-nginx -e "DOMAIN=neilpiper.me" \
+ -e "DOMAIN_ADMIN_EMAIL=webmaster@gmail.com" \
+ -e "AWS_ACCESS_KEY_ID=myaccesskey" \
+ -e "AWS_SECRET_ACCESS_KEY=mysecretkey"
 ```
+
+## Once running - create a certificate
+
+Enter your container and execute the following set of commands.
+
+```
+# accept defaults - your env variables take overview
+aws configure
+
+# test aws connectivity
+aws ec2 describe-regions
+
+# Expectation you meet the pre-requisutes
+./certbot-exec.sh
+```
+Wait a few minutes..
+
+```
+>./certbot-exec.sh
+
+Saving debug log to /letsencrypt/letsencrypt.log
+Plugins selected: Authenticator manual, Installer None
+Obtaining a new certificate
+Performing the following challenges:
+dns-01 challenge for yourdomain.com
+dns-01 challenge for www.youdomain.com
+Waiting for verification...
+Cleaning up challenges
+Non-standard path(s), might not work with crontab installed by your operating system package
+manager
+
+IMPORTANT NOTES:
+
+ - Congratulations! Your certificate and chain have been saved at:
+...
+```
+You should be done!
+
+A signed SSL RSA 2048 certificate chain from a trusted CA that (unfortunately) expires in 90 days with the accompanying private key.
+
+Certificate and Chain at
+ `/letsencrypt/live/${DOMAIN}/fullchain.pem`
+
+Keyfile at
+`/letsencrypt/live/${DOMAIN}/privkey.pem`
+
+Note - there's not much error checking in the scripts so if it doesn't work check your env variables and the pre-requisites.
+
+# Copy your crypto assets locally
+
+Using Docker copy ..
+
+Get your container ID of the running instance `docker ps` and replace the domain name in command below.
+
+`-L` used for copying the symbol link
+
+```
+docker cp -L ${containerId}:/letsencrypt/live/${DOMAIN}/fullchain.pem
+
+docker cp -L ${containerId}:/letsencrypt/live/${DOMAIN}/privkey.pem
+```
+
+## Help.. I want to revoke!
+
+Let's encrypt has a [guide on how to revoke](https://letsencrypt.org/docs/revoking/)
 
 # References
 
@@ -38,12 +142,23 @@ https://letsencrypt.org/getting-started/
 https://letsencrypt.org/how-it-works/
 https://github.com/ietf-wg-acme/acme
 
-Create an AMI with ansible
-https://djaodjin.com/blog/create-ec2-ami-with-ansible.blog.html
 
-
-Build an AWS Packer image AMI
-https://www.packer.io/intro/getting-started/build-image.html
 
 AWS CLI Installation
 https://docs.aws.amazon.com/cli/latest/userguide/awscli-install-linux.html
+
+AWS CLI On Debian Slim
+https://gist.github.com/anamorph/aaf8434d3bbad92059b3
+
+How to read Cert metadata (.pem) file
+https://coolaj86.com/articles/how-to-examine-an-ssl-https-tls-cert/
+
+## Next option - put this in an AMI
+
+Possible to copy the assets to a secure S3 bucket or vault instance?
+
+Create an AMI with ansible
+https://djaodjin.com/blog/create-ec2-ami-with-ansible.blog.html
+
+Build an AWS Packer image AMI
+https://www.packer.io/intro/getting-started/build-image.html
