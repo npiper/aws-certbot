@@ -38,6 +38,9 @@ Build your docker image
 docker build -t npiper/certbot-nginx .
 ```
 
+Also built at travis-ci [npiper/aws-certbot](https://travis-ci.org/npiper/aws-certbot)
+
+
 # Runtime variables
 
 These are the runtime variables of the container you should use so that you generate a certificate in the container.
