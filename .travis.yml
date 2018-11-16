@@ -1,6 +1,21 @@
 sudo: required
 services:
-  - docker
-
+- docker
 script:
-  - docker build -t npiper/certbot-nginx .
+- docker build --tag "$IMAGE_NAME" .
+env:
+  global:
+  - IMAGE_NAME=npiper/certbot-nginx
+  - secure: ST69uQ5nprOArkgD3c9BONQA7jrKV7O3fIai4njeZ7L+0qUdMtwq8T9PpDsxF46b2wjwWzFXEXLJS7yEUE7nlLViuX0a9eiVBzFid1GmIjqQM9V7bspLRrp2Hzk9jPSG6NmajC5QIEd4t85lDir5DHCkxRyWL04aR/xq4YewsAftXV3uXzD/xukyLJU0E1CBKNtL1VbpiXxKtjNqzL9hFz84msr8H3SWXSFS2DMR3JCa6icGBI1KG7c9jSBkaelbfw4WGn38204obzraorS8O6nfmZ7/hWlsfe2Zx11mHRX30l/Nwfa+i2KKYc+GYoSi/kOBuzH0r1CeVpo6jw1T6egWgzUHisNyE/M4fTlQpTC2ueFYv6j5nyG0DN40Zl9v6H25ch6muY7cwzu5rk1PB2itMSE5l9oewtpCW8NUf02x65nZHhp70K29iKSI/4Z8aGu0VP8wMDqX11DQjGgGonRiSgJAF0A2ifFM/ul6LSIuTgsTsT/IdrQQ0SKGHOenrK3pz4I3XgTBfa1sr5BPlFcY6yzyaRhw1P03vA4+nsCpm2nGtBQjCoDzNzRw82Q0fZUueTddz/lyHMFUk3ZBkAd4Q8WJBE/azGjVcDgx6mmuI2+3cdXlm3yVqAN3QIaw9ydaWoAk0PZ60RK6tQxvky3s42GQ3Fzrh/iqI8o6A50=
+  - secure: YYLeuzEhjK4gGihHNGffVYbAfGpEcKkHD2ERGoKYgBo74yByNxpAahXS/fc/eEJTwSYFoMnwP81Atwsdjh8TxpXpYJFgaksSMFIx1CKe5XmLH5BP3E0qi+fUPKTl84ytma+VDUS285bmRhKx/Y1nuJq9xZh0SZvz7anIVAqWfteMRB/WyJPr9zYpuwwDZX9nbotuzF3qjUp9qfK+OxKz01j7xlVWcL0KaAwZ6FuvK7iXmMMNmoJ3pWI7H/zREzhibnXYnd3kD9rDSuEBKdA1+d5zytjKjgFeUlNZ4zYrVzEJ5WApq3KPSqNk34i8SAAY3Fhg185u319HCUfLIFF8EyRm9ESqOPGvQwrlLqY3BWq169bIGKhaHPcPo8xZCut1K8vspMJV5N4L7aPs3etmHAb1zTrk7o+ntuASyDOVcoCMtHQ2afVHPpxBLJeoF/R4wK8QwyaeIZ3tk2o3KMbHH9R/HSMV6YdnH5WexEOsOeV1E6wqry0G+tMd3c7UrOVe3i2H9H9ppT2MpfUtPdabBeS2pn7g/vifWITh7jHn2morp5241Y6RsT1izeO2ku9Hbb81C05UFLM4mqouoP08uGuEVnuSQNWKr0WKZBVxbp2qLloV4Nq5PW9iOwNYux5JqjU2nt0qJ6NNb6KhbVYFZqSdUI/mM4CHzwhrvcwbElw=
+after_script:
+- docker images
+before_deploy:
+- docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS"
+- docker tag "$IMAGE_NAME" "${IMAGE_NAME}:latest"
+- docker tag "$IMAGE_NAME" "${IMAGE_NAME}:${TRAVIS_BUILD_NUMBER}"
+deploy:
+  provider: script
+  script: docker push "${IMAGE_NAME}:latest" && docker push "${IMAGE_NAME}:${TRAVIS_BUILD_NUMBER}"
+  on:
+    branch: master
