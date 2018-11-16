@@ -2,11 +2,15 @@
 
 Goal:  Can we launch a version of a webserver of 'neilpiper.me' that uses a Let's encrypt certificate for that domain and is fully automated?
 
-This project creates a docker container meeting the software requirements of the article [Easy, Lets Encrypt certificates on AWS](https://hackernoon.com/easy-lets-encrypt-certificates-on-aws-79387767830bs)
+This project creates a docker container meeting the software requirements of the article [Easy, Lets Encrypt certificates on AWS](https://hackernoon.com/easy-lets-encrypt-certificates-on-aws-79387767830bs) - thanks to Lionel Martin.
 
 Let’s Encrypt offers a free Certificate Authority service. It will sign SSL/TLS certificates for free.
 
-You can experiment with SSL on AWS without getting those pesky 'Untrusted certificate' warnings on your browser or for your users.
+You can experiment with SSL on AWS without getting those pesky 'Untrusted certificate' warnings on your browser or for your users.  
+
+Benefits are you can take your certificate somewhere else in future if you need to rather than being restricted to AWS. You also don't need the more expensive AWS options mentioned in Lionel's article.
+
+Its a principle of mine not to pollute my local dev environment with too many software versions and tools and where I find a need to instead script up infrastructure like Vagrant, Docker or an AMI and follow CI/CD.
 
 ## TO DO
 
@@ -14,9 +18,9 @@ Move the certificate somewhere useful in an automated way.
 
 # Initial approach
 
- * Docker setup of environment
+ * Docker setup of environment requirements
  * Install nginx, lets encrypt, AWS cli
- * Env variables for Domain, admin email & any AWS authentication, keys
+ * Allow use of Env variables for Domain, admin email & any AWS authentication, keys
 
 # Pre-Requisites
 
@@ -31,13 +35,12 @@ In my example I have an AWS account, and a domain I own `neilpiper.me` is regist
 Build your docker image
 
 ```
+docker build -t npiper/certbot-nginx .
 ```
 
 # Runtime variables
 
 These are the runtime variables of the container you should use so that you generate a certificate in the container.
-
-
 
 ```
 DOMAIN // Your internet domain e.g. neilpiper.me
@@ -65,6 +68,12 @@ docker run npiper/certbot-nginx -e "DOMAIN=neilpiper.me" \
 Enter your container and execute the following set of commands.
 
 ```
+docker ps
+
+// get the container id of npiper/certbot-nginx
+docker exec -it {containerId} bash
+
+
 # accept defaults - your env variables take overview
 aws configure
 
