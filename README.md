@@ -165,6 +165,9 @@ https://gist.github.com/anamorph/aaf8434d3bbad92059b3
 How to read Cert metadata (.pem) file
 https://coolaj86.com/articles/how-to-examine-an-ssl-https-tls-cert/
 
+Docker on TravisCI
+https://medium.com/mobileforgood/patterns-for-continuous-integration-with-docker-on-travis-ci-71857fff14c5
+
 ## Next option - put this in an AMI
 
 Possible to copy the assets to a secure S3 bucket or vault instance?
